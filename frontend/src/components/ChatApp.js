@@ -195,7 +195,16 @@
             break;
           case 'error':
             console.error('Chat error:', data.text);
-            botEl.textContent = 'An error occurred. Please try again.';
+            // Show error message with a retry button
+            botEl.innerHTML = 'Something went wrong — ';
+            const retryBtn = document.createElement('button');
+            retryBtn.textContent = 'retry';
+            retryBtn.className = 'underline cursor-pointer text-blue-600 hover:text-blue-800 transition-colors';
+            retryBtn.style.cssText = 'background:none;border:none;font-size:inherit;font-family:inherit;padding:0;cursor:pointer;color:#2563eb;text-decoration:underline;';
+            retryBtn.addEventListener('click', function () {
+              retryLastMessage(botEl);
+            });
+            botEl.appendChild(retryBtn);
             state.isStreaming = false;
             dom.btnSend.disabled = false;
             dom.chatInput.disabled = false;
@@ -410,6 +419,24 @@
   function sendMessage(text) {
     dom.chatInput.value = '';
     appendUserMessage(text);
+    sendToBackend();
+  }
+
+  /**
+   * retryLastMessage — re-sends the last user message after a streaming error.
+   * Removes the error bot bubble from the DOM and calls sendToBackend()
+   * (which uses state.messages to build the payload, avoiding a duplicate push).
+   * @param {HTMLElement} botEl — the <p> element inside the error bubble
+   */
+  function retryLastMessage(botEl) {
+    if (state.isStreaming) return;
+
+    // Remove the entire error bot message div from the DOM
+    const botMsgDiv = botEl.closest('.flex.justify-center');
+    if (botMsgDiv) botMsgDiv.remove();
+
+    // Re-send — the user's message is already in state.messages,
+    // so sendToBackend sends the correct payload without duplication.
     sendToBackend();
   }
 
