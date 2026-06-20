@@ -1,0 +1,217 @@
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors({ origin: true }));
+app.use(express.json({ limit: '1mb' }));
+
+// ── Gemini client ──────────────────────────────────────────────────
+let genAI;
+let model;
+
+function initGemini() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'your_key_here') return false;
+  genAI = new GoogleGenerativeAI(apiKey);
+  model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    systemInstruction: SYSTEM_PROMPT,
+  });
+  return true;
+}
+
+const SYSTEM_PROMPT = `You are Socratica, a Socratic chatbot. You NEVER answer questions — you ONLY ask questions.
+
+Rules:
+1. Every response you give MUST be a question. No exceptions.
+2. Do NOT greet the user, do NOT say hello, do NOT introduce yourself.
+3. Do NOT give advice, opinions, or suggestions.
+4. Do NOT make statements about the user's situation.
+5. Do NOT use phrases like "That's a great question" or "I see" or "I understand".
+6. If the user asks about you or why you only ask questions, respond with a question about their question (e.g., "What makes you curious about my approach?").
+7. Your questions should be thought-provoking, pushing the user to examine their own reasoning more deeply.
+8. Keep questions concise — one question at a time.
+9. Do NOT end with anything other than a question mark.
+
+Remember: Every single response must end with "?". If your response does not end with "?", you have failed.`;
+
+const REINFORCED_PROMPT = `You are Socratica, a Socratic chatbot. You NEVER answer questions — you ONLY ask questions.
+
+CRITICAL: Your previous response was rejected because it was NOT a question. Every single response MUST be a question ending with "?".
+
+Rules:
+1. EVERY response MUST be a question. No exceptions.
+2. Do NOT greet, introduce, or make small talk.
+3. Do NOT give advice, opinions, or suggestions.
+4. Do NOT make any statements at all.
+5. Your entire output must be ONE question — nothing else.
+6. The question must end with "?".
+
+Respond NOW with ONLY a question.`;
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
+function buildHistory(messages) {
+  const history = [];
+  // Skip the first user message — it becomes the initial prompt
+  for (let i = 1; i < messages.length; i++) {
+    const msg = messages[i];
+    if (msg.role === 'user') {
+      history.push({ role: 'user', parts: [{ text: msg.text }] });
+    } else if (msg.role === 'assistant') {
+      history.push({ role: 'model', parts: [{ text: msg.text }] });
+    }
+  }
+  return history;
+}
+
+function isQuestion(text) {
+  const trimmed = text.trim();
+  return trimmed.endsWith('?');
+}
+
+// ── POST /api/chat (SSE stream) ────────────────────────────────────
+
+app.post('/api/chat', async (req, res) => {
+  if (!initGemini()) {
+    return res.status(500).json({ error: 'Gemini API key not configured. Set GEMINI_API_KEY in .env' });
+  }
+
+  const { messages } = req.body;
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'messages array is required' });
+  }
+
+  // Set up SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const sendEvent = (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  const sendError = (msg) => {
+    sendEvent({ type: 'error', text: msg });
+    res.end();
+  };
+
+  try {
+    const userMessage = messages[messages.length - 1];
+    const history = buildHistory(messages);
+
+    // ── Attempt 1 ──────────────────────────────────────────────
+    let chat = model.startChat({ history });
+    let result = await chat.sendMessageStream(userMessage.text);
+    let buffer = '';
+    let fullResponse = '';
+
+    for await (const chunk of result.stream) {
+      const text = chunk.text();
+      if (text) {
+        buffer += text;
+        // Send tokens character by character for smooth streaming
+        for (const char of text) {
+          fullResponse += char;
+          sendEvent({ type: 'token', text: char });
+        }
+      }
+    }
+
+    // Check if the completed response is a question
+    if (!isQuestion(fullResponse)) {
+      // ── Attempt 2 (retry with reinforced prompt) ─────────────
+      // Send a retry signal
+      sendEvent({ type: 'retry', text: 'Reinforcing Socratic constraint...' });
+
+      chat = model.startChat({ history });
+      const reinforcedMessage = `[IMPORTANT: The previous response was rejected because it was not a question. Respond ONLY with a single question.] ${userMessage.text}`;
+      result = await chat.sendMessageStream(reinforcedMessage);
+      buffer = '';
+      fullResponse = '';
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) {
+          buffer += text;
+          for (const char of text) {
+            fullResponse += char;
+            sendEvent({ type: 'token', text: char });
+          }
+        }
+      }
+
+      // If still not a question, send fallback
+      if (!isQuestion(fullResponse)) {
+        const fallback = fullResponse.trim() + '?';
+        sendEvent({ type: 'token', text: '?' });
+        fullResponse = fallback;
+      }
+    }
+
+    sendEvent({ type: 'done', text: fullResponse });
+    res.end();
+  } catch (err) {
+    console.error('Chat error:', err);
+    sendError(err.message || 'Internal server error');
+  }
+});
+
+// ── POST /api/conclude (summary) ───────────────────────────────────
+
+app.post('/api/conclude', async (req, res) => {
+  if (!initGemini()) {
+    return res.status(500).json({ error: 'Gemini API key not configured' });
+  }
+
+  const { messages } = req.body;
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'messages array is required' });
+  }
+
+  try {
+    const conversationText = messages
+      .map((m) => `${m.role === 'user' ? 'User' : 'Socratica'}: ${m.text}`)
+      .join('\n');
+
+    const summaryPrompt = `You are a philosophical reflection engine. Below is a Socratic dialogue between a user and Socratica (an AI that only asks questions).
+
+Read the conversation and write a SINGLE sentence that reflects back the user's own conclusion or insight that emerged from the dialogue. Write it as if the user discovered this themselves.
+
+Do NOT add advice, recommendations, or further questions. Just one sentence that captures the essence of what the user worked through.
+
+Conversation:
+${conversationText}
+
+Summary sentence:`;
+
+    const summaryModel = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+    });
+    const result = await summaryModel.generateContent(summaryPrompt);
+    const summary = result.response.text().trim();
+
+    res.json({ summary });
+  } catch (err) {
+    console.error('Conclude error:', err);
+    res.status(500).json({ error: err.message || 'Failed to generate summary' });
+  }
+});
+
+// ── Health check ────────────────────────────────────────────────────
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', geminiConfigured: initGemini() });
+});
+
+app.listen(PORT, () => {
+  const configured = initGemini();
+  console.log(`Socratica backend running on http://localhost:${PORT}`);
+  console.log(`Gemini API: ${configured ? 'configured' : 'NOT configured (set GEMINI_API_KEY in .env)'}`);
+});
