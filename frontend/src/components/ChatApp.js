@@ -159,7 +159,8 @@
     const botEl = createBotMessageElement();
     const messagePayload = state.messages.map(m => ({ role: m.role, text: m.text }));
 
-    const eventSource = new EventSourcePolyfill('/api/chat', {
+    const apiBase = window.API_BASE_URL || 'http://localhost:3001';
+    const eventSource = new EventSourcePolyfill(apiBase + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: messagePayload }),
@@ -233,7 +234,8 @@
     dom.btnConcludeSidebar.textContent = 'Concluding…';
 
     try {
-      const res = await fetch('/api/conclude', {
+      const apiBase = window.API_BASE_URL || 'http://localhost:3001';
+      const res = await fetch(apiBase + '/api/conclude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: state.messages }),
