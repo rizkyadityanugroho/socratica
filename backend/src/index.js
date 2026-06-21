@@ -1,63 +1,14 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { GoogleGenAI, ApiError } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
+import { retryWithBackoff, logGeminiError, buildHistory, isQuestion } from './helpers.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '1mb' }));
-
-// ── Retry helper for 429 (rate limit) ───────────────────────────────
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1000; // 1s, 2s, 4s
-
-async function retryWithBackoff(fn, context = 'API call') {
-  let lastError;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-
-      // Only retry on 429 from the Gemini SDK
-      if (err instanceof ApiError && err.status === 429) {
-        if (attempt < MAX_RETRIES) {
-          const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
-          console.warn(
-            `[${context}] 429 rate limited (attempt ${attempt}/${MAX_RETRIES}). ` +
-            `Retrying in ${delay}ms...`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-        console.error(
-          `[${context}] 429 rate limit exhausted after ${MAX_RETRIES} attempts.`,
-        );
-      }
-
-      // Non-retryable or out of retries — rethrow
-      throw err;
-    }
-  }
-  throw lastError; // Shouldn't reach here, but keeps TS happy
-}
-
-/**
- * Log the full details of a Gemini API error for debugging.
- */
-function logGeminiError(context, err) {
-  if (err instanceof ApiError) {
-    console.error(`[${context}] Gemini fetch error (HTTP ${err.status}):`, {
-      message: err.message,
-      status: err.status,
-      errorDetails: err.errorDetails,
-    });
-  } else {
-    console.error(`[${context}] Gemini error:`, err);
-  }
-}
 
 // ── Gemini client ──────────────────────────────────────────────────
 let ai;
@@ -97,27 +48,6 @@ Rules:
 6. The question must end with "?".
 
 Respond NOW with ONLY a question.`;
-
-// ── Helpers ─────────────────────────────────────────────────────────
-
-function buildHistory(messages) {
-  const history = [];
-  // Skip the first user message — it becomes the initial prompt
-  for (let i = 1; i < messages.length; i++) {
-    const msg = messages[i];
-    if (msg.role === 'user') {
-      history.push({ role: 'user', parts: [{ text: msg.text }] });
-    } else if (msg.role === 'assistant') {
-      history.push({ role: 'model', parts: [{ text: msg.text }] });
-    }
-  }
-  return history;
-}
-
-function isQuestion(text) {
-  const trimmed = text.trim();
-  return trimmed.endsWith('?');
-}
 
 // ── POST /api/chat (SSE stream) ────────────────────────────────────
 
@@ -282,8 +212,14 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', geminiConfigured: initGemini() });
 });
 
-app.listen(PORT, () => {
-  const configured = initGemini();
-  console.log(`Socratica backend running on http://localhost:${PORT}`);
-  console.log(`Gemini API: ${configured ? 'configured' : 'NOT configured (set GEMINI_API_KEY in .env)'}`);
-});
+// Export app for testing
+export { app, initGemini };
+
+// Only start server if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, () => {
+    const configured = initGemini();
+    console.log(`Socratica backend running on http://localhost:${PORT}`);
+    console.log(`Gemini API: ${configured ? 'configured' : 'NOT configured (set GEMINI_API_KEY in .env)'}`);
+  });
+}

@@ -3,3 +3,6 @@ dist/
 .env
 .astro/
 frontend/dist/
+
+# Test coverage reports
+backend/coverage/
