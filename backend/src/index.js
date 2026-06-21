@@ -101,7 +101,7 @@ app.post('/api/chat', async (req, res) => {
     let buffer = '';
     let fullResponse = '';
 
-    for await (const chunk of result.stream) {
+    for await (const chunk of result) {
       const text = chunk.text;
       if (text) {
         buffer += text;
@@ -136,7 +136,7 @@ app.post('/api/chat', async (req, res) => {
       buffer = '';
       fullResponse = '';
 
-      for await (const chunk of result.stream) {
+      for await (const chunk of result) {
         const text = chunk.text;
         if (text) {
           buffer += text;
