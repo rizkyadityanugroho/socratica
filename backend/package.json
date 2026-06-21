@@ -4,6 +4,7 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
+    "dev": "concurrently -n be,fe -c blue,green \"node src/index.js\" \"npm run dev --prefix ../frontend\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.9",
+    "concurrently": "^10.0.3",
     "supertest": "^7.2.2",
     "vitest": "^4.1.9"
   }

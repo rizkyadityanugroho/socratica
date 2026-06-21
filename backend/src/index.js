@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { retryWithBackoff, logGeminiError, buildHistory, isQuestion } from './helpers.js';
 
@@ -216,7 +218,8 @@ app.get('/api/health', (req, res) => {
 export { app, initGemini };
 
 // Only start server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] && path.resolve(__filename) === path.resolve(process.argv[1])) {
   app.listen(PORT, () => {
     const configured = initGemini();
     console.log(`Socratica backend running on http://localhost:${PORT}`);
