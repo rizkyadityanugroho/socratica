@@ -35,7 +35,7 @@ describe('POST /api/chat — streaming', () => {
       Promise.resolve({
         history: [],
         sendMessageStream: () =>
-          Promise.resolve({ stream: streamFrom('What ', 'do ', 'you\nthink?') }),
+          Promise.resolve(streamFrom('What ', 'do ', 'you\nthink?')),
       });
 
     const res = await request(app)
@@ -53,7 +53,7 @@ describe('POST /api/chat — streaming', () => {
       Promise.resolve({
         history: [],
         sendMessageStream: () =>
-          Promise.resolve({ stream: streamFrom('What?') }),
+          Promise.resolve(streamFrom('What?')),
       });
 
     const res = await request(app)
@@ -71,7 +71,7 @@ describe('POST /api/chat — streaming', () => {
     globalThis.__geminiMock.chatCreate = () => {
       const chat = {
         _history: [],
-        sendMessageStream: vi.fn().mockResolvedValue({ stream: streamFrom('Why?') }),
+        sendMessageStream: vi.fn().mockResolvedValue(streamFrom('Why?')),
         get history() { return this._history; },
         set history(v) { captured = v; this._history = v; },
       };
@@ -102,7 +102,7 @@ describe('POST /api/chat — streaming', () => {
       return Promise.resolve({
         history: [],
         sendMessageStream: () =>
-          Promise.resolve({ stream: streamFrom(reply) }),
+          Promise.resolve(streamFrom(reply)),
       });
     };
 
@@ -127,7 +127,7 @@ describe('POST /api/chat — streaming', () => {
       Promise.resolve({
         history: [],
         sendMessageStream: () =>
-          Promise.resolve({ stream: streamFrom('Not a question') }),
+          Promise.resolve(streamFrom('Not a question')),
       });
 
     const res = await request(app)

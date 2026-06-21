@@ -18,7 +18,7 @@ vi.mock('@google/genai', () => {
           history: [],
           sendMessageStream: function () {
             return Promise.resolve({
-              stream: { async *[Symbol.asyncIterator]() {} },
+              async *[Symbol.asyncIterator]() {},
             });
           },
         });
