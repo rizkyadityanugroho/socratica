@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, ApiError } from '@google/genai';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -9,18 +9,63 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '1mb' }));
 
+// ── Retry helper for 429 (rate limit) ───────────────────────────────
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000; // 1s, 2s, 4s
+
+async function retryWithBackoff(fn, context = 'API call') {
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+
+      // Only retry on 429 from the Gemini SDK
+      if (err instanceof ApiError && err.status === 429) {
+        if (attempt < MAX_RETRIES) {
+          const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+          console.warn(
+            `[${context}] 429 rate limited (attempt ${attempt}/${MAX_RETRIES}). ` +
+            `Retrying in ${delay}ms...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        console.error(
+          `[${context}] 429 rate limit exhausted after ${MAX_RETRIES} attempts.`,
+        );
+      }
+
+      // Non-retryable or out of retries — rethrow
+      throw err;
+    }
+  }
+  throw lastError; // Shouldn't reach here, but keeps TS happy
+}
+
+/**
+ * Log the full details of a Gemini API error for debugging.
+ */
+function logGeminiError(context, err) {
+  if (err instanceof ApiError) {
+    console.error(`[${context}] Gemini fetch error (HTTP ${err.status}):`, {
+      message: err.message,
+      status: err.status,
+      errorDetails: err.errorDetails,
+    });
+  } else {
+    console.error(`[${context}] Gemini error:`, err);
+  }
+}
+
 // ── Gemini client ──────────────────────────────────────────────────
-let genAI;
-let model;
+let ai;
 
 function initGemini() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_key_here') return false;
-  genAI = new GoogleGenerativeAI(apiKey);
-  model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
-    systemInstruction: SYSTEM_PROMPT,
-  });
+  ai = new GoogleGenAI({ apiKey });
   return true;
 }
 
@@ -107,13 +152,25 @@ app.post('/api/chat', async (req, res) => {
     const history = buildHistory(messages);
 
     // ── Attempt 1 ──────────────────────────────────────────────
-    let chat = model.startChat({ history });
-    let result = await chat.sendMessageStream(userMessage.text);
+    let chat = await ai.chats.create({
+      model: 'gemini-2.5-flash-lite',
+      config: { systemInstruction: SYSTEM_PROMPT },
+    });
+    
+    // Set history if available
+    if (history.length > 0) {
+      chat.history = history;
+    }
+
+    let result = await retryWithBackoff(
+      () => chat.sendMessageStream({ message: userMessage.text }),
+      'Chat.sendMessageStream',
+    );
     let buffer = '';
     let fullResponse = '';
 
     for await (const chunk of result.stream) {
-      const text = chunk.text();
+      const text = chunk.text;
       if (text) {
         buffer += text;
         // Send tokens character by character for smooth streaming
@@ -130,14 +187,25 @@ app.post('/api/chat', async (req, res) => {
       // Send a retry signal
       sendEvent({ type: 'retry', text: 'Reinforcing Socratic constraint...' });
 
-      chat = model.startChat({ history });
+      chat = await ai.chats.create({
+        model: 'gemini-2.5-flash-lite',
+        config: { systemInstruction: SYSTEM_PROMPT },
+      });
+      
+      if (history.length > 0) {
+        chat.history = history;
+      }
+
       const reinforcedMessage = `[IMPORTANT: The previous response was rejected because it was not a question. Respond ONLY with a single question.] ${userMessage.text}`;
-      result = await chat.sendMessageStream(reinforcedMessage);
+      result = await retryWithBackoff(
+        () => chat.sendMessageStream({ message: reinforcedMessage }),
+        'Chat.sendMessageStream (reinforced)',
+      );
       buffer = '';
       fullResponse = '';
 
       for await (const chunk of result.stream) {
-        const text = chunk.text();
+        const text = chunk.text;
         if (text) {
           buffer += text;
           for (const char of text) {
@@ -158,7 +226,7 @@ app.post('/api/chat', async (req, res) => {
     sendEvent({ type: 'done', text: fullResponse });
     res.end();
   } catch (err) {
-    console.error('Chat error:', err);
+    logGeminiError('POST /api/chat', err);
     sendError(err.message || 'Internal server error');
   }
 });
@@ -191,15 +259,19 @@ ${conversationText}
 
 Summary sentence:`;
 
-    const summaryModel = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-    });
-    const result = await summaryModel.generateContent(summaryPrompt);
-    const summary = result.response.text().trim();
+    const result = await retryWithBackoff(
+      () => ai.models.generateContent({
+        model: 'gemini-2.5-flash-lite',
+        contents: summaryPrompt,
+        config: {},
+      }),
+      'Conclude.generateContent',
+    );
+    const summary = result.text.trim();
 
     res.json({ summary });
   } catch (err) {
-    console.error('Conclude error:', err);
+    logGeminiError('POST /api/conclude', err);
     res.status(500).json({ error: err.message || 'Failed to generate summary' });
   }
 });
