@@ -8,6 +8,7 @@ import { retryWithBackoff, logGeminiError, buildHistory, isQuestion } from './he
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '1mb' }));
@@ -85,7 +86,7 @@ app.post('/api/chat', async (req, res) => {
 
     // ── Attempt 1 ──────────────────────────────────────────────
     let chat = await ai.chats.create({
-      model: 'gemini-2.5-flash-lite',
+      model: MODEL,
       config: { systemInstruction: SYSTEM_PROMPT },
     });
     
@@ -120,7 +121,7 @@ app.post('/api/chat', async (req, res) => {
       sendEvent({ type: 'retry', text: 'Reinforcing Socratic constraint...' });
 
       chat = await ai.chats.create({
-        model: 'gemini-2.5-flash-lite',
+        model: MODEL,
         config: { systemInstruction: SYSTEM_PROMPT },
       });
       
@@ -193,7 +194,7 @@ Summary sentence:`;
 
     const result = await retryWithBackoff(
       () => ai.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
+        model: MODEL,
         contents: summaryPrompt,
         config: {},
       }),

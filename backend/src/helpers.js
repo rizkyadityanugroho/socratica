@@ -1,8 +1,8 @@
 import { ApiError } from '@google/genai';
 
 // ── Retry helper for 429 (rate limit) ───────────────────────────────
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1000; // 1s, 2s, 4s
+const MAX_RETRIES = parseInt(process.env.GEMINI_MAX_RETRIES || '3', 10);
+const BASE_DELAY_MS = parseInt(process.env.GEMINI_RETRY_DELAY_MS || '1000', 10);
 
 export async function retryWithBackoff(fn, context = 'API call') {
   let lastError;

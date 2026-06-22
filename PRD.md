@@ -157,13 +157,18 @@ socratica/
 │   │       └── index.astro       # Landing page
 │   ├── public/
 │   │   └── favicon.svg           # (optional)
+│   ├── .env                      # Public env vars (PUBLIC_*)
+│   ├── .env.example
 │   ├── astro.config.mjs
 │   ├── tailwind.config.js
 │   ├── package.json
 │   └── tsconfig.json
 ├── backend/
 │   ├── src/
-│   │   └── index.js              # Express server with chat + conclude routes
+│   │   ├── index.js              # Express server with chat + conclude routes
+│   │   ├── helpers.js            # Retry, history builder, validation
+│   │   └── __tests__/            # Unit test suite (vitest)
+│   ├── .env
 │   ├── .env.example
 │   └── package.json
 ```

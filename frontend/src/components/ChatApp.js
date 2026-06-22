@@ -159,7 +159,7 @@
     const botEl = createBotMessageElement();
     const messagePayload = state.messages.map(m => ({ role: m.role, text: m.text }));
 
-    const apiBase = window.API_BASE_URL || 'http://localhost:3001';
+    const apiBase = import.meta.env.PUBLIC_API_BASE_URL || '';
     const eventSource = new EventSourcePolyfill(apiBase + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -243,7 +243,7 @@
     dom.btnConcludeSidebar.textContent = 'Concluding…';
 
     try {
-      const apiBase = window.API_BASE_URL || 'http://localhost:3001';
+      const apiBase = import.meta.env.PUBLIC_API_BASE_URL || '';
       const res = await fetch(apiBase + '/api/conclude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
