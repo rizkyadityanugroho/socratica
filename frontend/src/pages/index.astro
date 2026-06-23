@@ -10,7 +10,9 @@ import Layout from '../layouts/Layout.astro';
   <div id="socratica-root">
 
     <!-- ─── LANDING VIEW ─── -->
-    <div id="landing-view" class="min-h-screen flex flex-col">
+    <div id="landing-view">
+      <!-- Hero wrapper — fills viewport exactly -->
+      <div class="h-screen flex flex-col">
 
       <!-- Header -->
       <header class="flex items-center justify-between px-4 sm:px-10 py-4 sm:py-6 border-b border-gray-200">
@@ -79,6 +81,7 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </div>
       </main>
+      </div><!-- /hero-wrapper -->
 
       <!-- Three columns — below the fold, visible on scroll -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mt-24 mb-16 max-w-4xl w-full px-4 mx-auto">
