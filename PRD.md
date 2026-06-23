@@ -2,7 +2,7 @@
 
 **Product:** Socratica — The chatbot that never answers. It only asks.
 **Status:** Draft
-**Date:** 2026-06-20
+**Date:** 2026-06-23
 
 ---
 
@@ -81,6 +81,13 @@ Landing page  →  Type your question/dilemma
 - **F4.2** `POST /api/conclude` — accepts full conversation, returns a summary statement
 - **F4.3** Backend validates that the response is a question before streaming
 
+### F5. Rate Limiting
+- **F5.1** Rate limiting applied per IP address using `express-rate-limit` (in-memory store)
+- **F5.2** `POST /api/chat`: max 10 requests per 60-second sliding window
+- **F5.3** `POST /api/conclude`: max 5 requests per 60-second sliding window
+- **F5.4** Exceeded limit returns HTTP 429 with a plain JSON body `{ "error": "Too many requests. Please slow down." }`
+- **F5.5** Rate limit state is ephemeral — resets on server restart (acceptable for single-instance deployment)
+
 ---
 
 ## 6. Non-Functional Requirements
@@ -92,6 +99,7 @@ Landing page  →  Type your question/dilemma
 | **Mobile support** | Full-width responsive layout |
 | **Zero persistence** | No cookies, no localStorage user data, no tracking |
 | **API key config** | Via `.env` only, never hardcoded |
+| **Rate limiting storage** | In-memory (no external dependency). Upgrade to Redis-backed when multi-instance deployment needed |
 
 ---
 
@@ -185,6 +193,7 @@ socratica/
 | Empty input submitted | Frontend validation: disable send button when input is blank |
 | Very long conversation | No hard limit; Gemini context window handles it. If length becomes an issue, add a token counter warning |
 | API key exposed in frontend | Key lives in backend `.env` only; never sent to the browser |
+| User hits rate limit | Backend returns 429 with descriptive message. Frontend shows a non-blocking toast: "You're going deep — take a breath and try again in a moment." |
 
 ---
 

@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
+import { rateLimit } from 'express-rate-limit';
 import { retryWithBackoff, logGeminiError, buildHistory, isQuestion } from './helpers.js';
 
 const app = express();
@@ -12,6 +13,30 @@ const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '1mb' }));
+
+// ── Rate limiters ──────────────────────────────────────────────────
+// Skip rate limiting in test environment to allow rapid test requests
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+const chatLimiter = isTestEnv
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 60 * 1000, // 60 seconds
+      max: 10, // 10 requests per window
+      message: { error: 'Too many requests. Please slow down.' },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
+const concludeLimiter = isTestEnv
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 60 * 1000, // 60 seconds
+      max: 5, // 5 requests per window
+      message: { error: 'Too many requests. Please slow down.' },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
 
 // ── Gemini client ──────────────────────────────────────────────────
 let ai;
@@ -54,7 +79,7 @@ Respond NOW with ONLY a question.`;
 
 // ── POST /api/chat (SSE stream) ────────────────────────────────────
 
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', chatLimiter, async (req, res) => {
   if (!initGemini()) {
     return res.status(500).json({ error: 'Gemini API key not configured. Set GEMINI_API_KEY in .env' });
   }
@@ -166,7 +191,7 @@ app.post('/api/chat', async (req, res) => {
 
 // ── POST /api/conclude (summary) ───────────────────────────────────
 
-app.post('/api/conclude', async (req, res) => {
+app.post('/api/conclude', concludeLimiter, async (req, res) => {
   if (!initGemini()) {
     return res.status(500).json({ error: 'Gemini API key not configured' });
   }
