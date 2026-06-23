@@ -182,19 +182,15 @@ import Layout from '../layouts/Layout.astro';
 
           <!-- Session Header -->
           <div class="px-4 sm:px-10 pt-8 pb-4 border-b border-gray-200 bg-white">
-            <div class="flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-1">
+            <div class="flex items-center gap-3">
               <!-- Sidebar toggle (mobile only) -->
-              <button id="sidebar-toggle" class="sm:hidden mr-2 text-gray-400 hover:text-charcoal">
+              <button id="sidebar-toggle" class="sm:hidden flex-shrink-0 w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-gray-400" aria-label="Toggle sidebar">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
               </button>
-              <span class="w-2 h-2 rounded-full bg-[#B8860B]"></span>
-              <span>Current Session</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <h3 id="session-title" class="text-sm font-medium text-charcoal">Exploring Your Question</h3>
-              <span id="session-time" class="text-xs italic text-gray-400"></span>
+              <h3 id="session-title" class="text-sm font-medium text-charcoal truncate min-w-0">Exploring Your Question</h3>
+              <span id="session-time" class="text-xs italic text-gray-400 flex-shrink-0 ml-auto"></span>
             </div>
           </div>
 
