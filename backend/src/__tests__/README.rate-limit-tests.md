@@ -11,7 +11,7 @@ npx vitest run src/__tests__/routes.rate-limit.test.js
 ```
 
 ### Note:
-`npm test` runs the main suite (44 tests) with `NODE_ENV=test`, which **skips** rate limiting. Rate-limit tests must be run separately.
+`npm test` runs the main suite (44 tests). Rate-limit tests must be run separately since they manipulate env vars to bypass the `isTestEnv` guard.
 
 ## Test Scenarios
 

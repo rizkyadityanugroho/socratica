@@ -5,9 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "concurrently -n be,fe -c blue,green \"node src/index.js\" \"npm run dev --prefix ../frontend\"",
-    "test": "NODE_ENV=test vitest run",
-    "test:watch": "NODE_ENV=test vitest",
-    "test:coverage": "NODE_ENV=test vitest run --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "start": "node src/index.js"
   },
   "dependencies": {
