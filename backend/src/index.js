@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { rateLimit } from 'express-rate-limit';
 import { retryWithBackoff, logGeminiError, buildHistory, isQuestion } from './helpers.js';
+import { createProxiedFetch } from './proxy.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -44,6 +45,15 @@ let ai;
 function initGemini() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_key_here') return false;
+
+  // Monkey-patch global fetch to route Gemini API calls through proxy
+  // (@google/genai SDK uses global fetch directly, ignores httpOptions)
+  const proxyUrl = process.env.GEMINI_PROXY;
+  if (proxyUrl) {
+    const proxiedFetch = createProxiedFetch(proxyUrl);
+    if (proxiedFetch) globalThis.fetch = proxiedFetch;
+  }
+
   ai = new GoogleGenAI({ apiKey });
   return true;
 }
