@@ -47,8 +47,8 @@ import Layout from '../layouts/Layout.astro';
       <!-- Mobile nav overlay -->
       <div id="mobile-nav-overlay" class="fixed inset-0 bg-black/30 z-40 hidden sm:hidden"></div>
 
-      <!-- Hero -->
-      <main class="flex-1 flex flex-col items-center justify-center px-6 max-w-4xl mx-auto w-full min-h-[100vh]">
+      <!-- Hero — true viewport center -->
+      <main class="flex-1 flex flex-col items-center justify-center px-6 max-w-4xl mx-auto w-full">
         <div class="text-center mb-16">
           <p class="font-serif italic text-4xl md:text-5xl lg:text-6xl text-charcoal leading-tight">
             "The unexamined life<br class="sm:hidden"> is not worth living"
@@ -78,9 +78,10 @@ import Layout from '../layouts/Layout.astro';
             </button>
           </div>
         </div>
+      </main>
 
-        <!-- Three columns (BELOW the fold) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mt-24 mb-16 max-w-4xl w-full px-4">
+      <!-- Three columns — below the fold, visible on scroll -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mt-24 mb-16 max-w-4xl w-full px-4 mx-auto">
           <div class="text-center">
             <h3 class="text-sm uppercase tracking-[0.2em] text-[#B8860B] font-sans font-semibold mb-4">Method</h3>
             <p class="text-sm text-gray-600 leading-relaxed font-light">
