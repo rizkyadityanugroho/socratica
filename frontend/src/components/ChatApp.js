@@ -39,6 +39,13 @@
     dom.sessionTitle = $('session-title');
     dom.sessionTime = $('session-time');
     dom.conclusionSummary = $('conclusion-summary');
+    dom.mobileMenuBtn = $('mobile-menu-btn');
+    dom.mobileNav = $('mobile-nav');
+    dom.mobileNavOverlay = $('mobile-nav-overlay');
+    dom.sidebarToggle = $('sidebar-toggle');
+    dom.sidebarClose = $('sidebar-close');
+    dom.chatSidebar = $('chat-sidebar');
+    dom.sidebarOverlay = $('sidebar-overlay');
   }
 
   // ── View Switching ─────────────────────────────────────────────────
@@ -414,6 +421,33 @@
 
     // Start over
     dom.btnStartOver.addEventListener('click', resetSession);
+
+    // Mobile menu toggle (landing page)
+    dom.mobileMenuBtn.addEventListener('click', () => {
+      dom.mobileNav.classList.toggle('-translate-x-full');
+      dom.mobileNavOverlay.classList.toggle('hidden');
+    });
+
+    dom.mobileNavOverlay.addEventListener('click', () => {
+      dom.mobileNav.classList.add('-translate-x-full');
+      dom.mobileNavOverlay.classList.add('hidden');
+    });
+
+    // Chat sidebar toggle (mobile)
+    dom.sidebarToggle.addEventListener('click', () => {
+      dom.chatSidebar.classList.remove('-translate-x-full');
+      dom.sidebarOverlay.classList.remove('hidden');
+    });
+
+    dom.sidebarClose.addEventListener('click', () => {
+      dom.chatSidebar.classList.add('-translate-x-full');
+      dom.sidebarOverlay.classList.add('hidden');
+    });
+
+    dom.sidebarOverlay.addEventListener('click', () => {
+      dom.chatSidebar.classList.add('-translate-x-full');
+      dom.sidebarOverlay.classList.add('hidden');
+    });
   }
 
   function sendMessage(text) {
