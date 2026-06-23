@@ -13,9 +13,11 @@ import Layout from '../layouts/Layout.astro';
     <div id="landing-view" class="min-h-screen flex flex-col">
 
       <!-- Header -->
-      <header class="flex items-center justify-between px-10 py-6 border-b border-gray-200">
+      <header class="flex items-center justify-between px-4 sm:px-10 py-4 sm:py-6 border-b border-gray-200">
         <h1 class="text-2xl font-serif font-bold tracking-tight text-charcoal">Socratica</h1>
-        <nav class="flex items-center gap-8 text-sm uppercase tracking-widest text-gray-500">
+        
+        <!-- Desktop nav (hidden on mobile) -->
+        <nav class="hidden sm:flex items-center gap-8 text-sm uppercase tracking-widest text-gray-500">
           <a href="#" class="hover:text-charcoal transition-colors">Inquiry</a>
           <a href="#" class="hover:text-charcoal transition-colors">Library</a>
           <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center">
@@ -24,26 +26,49 @@ import Layout from '../layouts/Layout.astro';
             </svg>
           </div>
         </nav>
+
+        <!-- Mobile hamburger (visible on mobile only) -->
+        <button id="mobile-menu-btn" class="sm:hidden text-gray-500 hover:text-charcoal">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
       </header>
 
+      <!-- Mobile nav drawer -->
+      <div id="mobile-nav" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 sm:hidden">
+        <div class="p-6 space-y-4">
+          <a href="#" class="block text-sm uppercase tracking-widest text-gray-500 hover:text-charcoal transition-colors">Inquiry</a>
+          <a href="#" class="block text-sm uppercase tracking-widest text-gray-500 hover:text-charcoal transition-colors">Library</a>
+          <a href="#" class="block text-sm uppercase tracking-widest text-gray-500 hover:text-charcoal transition-colors">Profile</a>
+        </div>
+      </div>
+
+      <!-- Mobile nav overlay -->
+      <div id="mobile-nav-overlay" class="fixed inset-0 bg-black/30 z-40 hidden sm:hidden"></div>
+
       <!-- Hero -->
-      <main class="flex-1 flex flex-col items-center justify-center px-6 max-w-4xl mx-auto w-full">
+      <main class="flex-1 flex flex-col items-center justify-center px-6 max-w-4xl mx-auto w-full min-h-[100vh]">
         <div class="text-center mb-16">
           <p class="font-serif italic text-4xl md:text-5xl lg:text-6xl text-charcoal leading-tight">
             "The unexamined life<br class="sm:hidden"> is not worth living"
           </p>
         </div>
 
-        <!-- Input area -->
+        <!-- Input area with lightbulb -->
         <div class="w-full max-w-xl mx-auto">
-          <input
-            id="landing-input"
-            type="text"
-            placeholder="What's on your mind?"
-            class="w-full text-center text-lg font-light italic text-gray-700 placeholder-gray-400 bg-transparent border-none outline-none pb-4"
-            autocomplete="off"
-          />
-          <div class="w-full h-px bg-gray-300 mb-6"></div>
+          <div class="flex items-center border-b border-gray-300 pb-3 mb-5">
+            <svg class="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            <input
+              id="landing-input"
+              type="text"
+              placeholder="What's on your mind?"
+              class="flex-1 text-left text-lg font-light italic text-gray-700 placeholder-gray-400 bg-transparent border-none outline-none"
+              autocomplete="off"
+            />
+          </div>
           <div class="flex justify-center gap-4">
             <button id="btn-begin-dialogue" class="px-8 py-3 border border-charcoal text-charcoal text-sm uppercase tracking-widest hover:bg-charcoal hover:text-white transition-colors">
               Begin Dialogue
@@ -54,33 +79,33 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </div>
 
-        <!-- Three columns -->
+        <!-- Three columns (BELOW the fold) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mt-24 mb-16 max-w-4xl w-full px-4">
           <div class="text-center">
             <h3 class="text-sm uppercase tracking-[0.2em] text-[#B8860B] font-sans font-semibold mb-4">Method</h3>
             <p class="text-sm text-gray-600 leading-relaxed font-light">
-              Through disciplined questioning, we strip away assumptions until only clarity remains.
+              Engage in dialectic reasoning. Strip away the superfluous until only truth remains.
             </p>
           </div>
           <div class="text-center">
             <h3 class="text-sm uppercase tracking-[0.2em] text-[#B8860B] font-sans font-semibold mb-4">Intent</h3>
             <p class="text-sm text-gray-600 leading-relaxed font-light">
-              Not to answer, but to illuminate. The path is carved by your own reasoning.
+              A sanctuary for high-level cognition. No noise, just the purity of the unexamined thought.
             </p>
           </div>
           <div class="text-center">
             <h3 class="text-sm uppercase tracking-[0.2em] text-[#B8860B] font-sans font-semibold mb-4">Archive</h3>
             <p class="text-sm text-gray-600 leading-relaxed font-light">
-              Every dialogue is ephemeral. Nothing is stored. Nothing is tracked.
+              Every inquiry is etched into your personal Library, forming a legacy of wisdom.
             </p>
           </div>
         </div>
       </main>
 
       <!-- Footer -->
-      <footer class="border-t border-gray-200 py-6 px-10">
+      <footer class="border-t border-gray-200 py-5 sm:py-6 px-4 sm:px-10">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-          <p class="tracking-wider font-sans">&copy; SOCRATICA — THE UNEXAMINED LIFE IS NOT WORTH LIVING</p>
+          <p class="tracking-wider font-sans text-center sm:text-left">&copy; SOCRATICA — THE UNEXAMINED LIFE IS NOT WORTH LIVING</p>
           <nav class="flex gap-6 uppercase tracking-widest">
             <a href="#" class="hover:text-gray-600 transition-colors">Ethics</a>
             <a href="#" class="hover:text-gray-600 transition-colors">Privacy</a>
@@ -95,11 +120,17 @@ import Layout from '../layouts/Layout.astro';
       <!-- Two-column layout -->
       <div class="flex h-screen">
 
-        <!-- Sidebar -->
-        <aside id="chat-sidebar" class="w-[250px] min-w-[200px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <!-- Sidebar with mobile drawer -->
+        <aside id="chat-sidebar" class="fixed sm:relative inset-y-0 left-0 z-30 w-[260px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0 transform -translate-x-full sm:translate-x-0 transition-transform duration-300">
           <!-- Branding -->
-          <div class="px-6 pt-8 pb-6 border-b border-gray-100">
+          <div class="px-6 pt-8 pb-6 border-b border-gray-100 flex items-center justify-between">
             <h2 class="text-xl font-serif font-bold text-charcoal">Socratica</h2>
+            <!-- Close button (mobile only) -->
+            <button id="sidebar-close" class="sm:hidden text-gray-400 hover:text-charcoal">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
 
           <!-- Nav -->
@@ -143,12 +174,21 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </aside>
 
+        <!-- Sidebar overlay (mobile) -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/30 z-20 hidden sm:hidden"></div>
+
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-offwhite min-w-0">
 
           <!-- Session Header -->
-          <div class="px-10 pt-8 pb-4 border-b border-gray-200 bg-white">
+          <div class="px-4 sm:px-10 pt-8 pb-4 border-b border-gray-200 bg-white">
             <div class="flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-1">
+              <!-- Sidebar toggle (mobile only) -->
+              <button id="sidebar-toggle" class="sm:hidden mr-2 text-gray-400 hover:text-charcoal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+              </button>
               <span class="w-2 h-2 rounded-full bg-[#B8860B]"></span>
               <span>Current Session</span>
             </div>
@@ -159,12 +199,12 @@ import Layout from '../layouts/Layout.astro';
           </div>
 
           <!-- Messages -->
-          <div id="messages-container" class="flex-1 overflow-y-auto px-8 md:px-14 py-8 space-y-6">
+          <div id="messages-container" class="flex-1 overflow-y-auto px-4 sm:px-8 md:px-14 py-8 space-y-6">
             <!-- Messages rendered by ChatApp.js -->
           </div>
 
           <!-- Loading indicator -->
-          <div id="loading-indicator" class="hidden px-14 pb-4">
+          <div id="loading-indicator" class="hidden px-4 sm:px-14 pb-4">
             <div class="flex items-center gap-2 text-sm text-gray-400 italic">
               <div class="flex gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style="animation-delay:0ms"></span>
@@ -176,7 +216,7 @@ import Layout from '../layouts/Layout.astro';
           </div>
 
           <!-- Input Bar -->
-          <div class="px-8 md:px-14 py-6 border-t border-gray-200 bg-white">
+          <div class="px-4 sm:px-8 md:px-14 py-4 sm:py-6 border-t border-gray-200 bg-white">
             <div class="max-w-3xl">
               <div class="flex items-center gap-3">
                 <input
@@ -190,9 +230,18 @@ import Layout from '../layouts/Layout.astro';
                   Send
                 </button>
               </div>
-              <div class="flex items-center gap-6 mt-3">
-                <button id="btn-notebook" class="text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">Add to Notebook</button>
-                <button id="btn-export" class="text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">Export Transcript</button>
+              <div class="flex items-center gap-4 mt-3 flex-wrap">
+                <!-- Icon-only buttons -->
+                <button id="btn-notebook" class="text-gray-400 hover:text-gray-600 transition-colors" title="Add to Notebook">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </button>
+                <button id="btn-export" class="text-gray-400 hover:text-gray-600 transition-colors" title="Export Transcript">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </button>
                 <button id="btn-conclude" class="ml-auto text-[10px] uppercase tracking-widest text-coral hover:text-red-500 transition-colors font-medium">
                   Conclude
                 </button>

@@ -1,0 +1,34 @@
+# ── Root domain — maintenance / portfolio ──────────────────────────
+rizkyadityanugroho.my.id, www.rizkyadityanugroho.my.id {
+	root * /var/www/root
+	file_server
+	try_files {path} /index.html
+
+	header /* {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ── Socratica subdomain ────────────────────────────────────────────
+socratica.rizkyadityanugroho.my.id {
+	# Route block enforces EXPLICIT handler ordering
+	# (overrides Caddy v2's internal directive reordering)
+	route {
+		# API proxy — matches FIRST, accepts all HTTP methods
+		reverse_proxy /api/* backend:3001
+
+		# Static files + SPA fallback
+		root * /var/www/frontend
+		file_server
+		try_files {path} /index.html
+	}
+
+	# Security headers
+	header /* {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
