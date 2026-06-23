@@ -10,9 +10,9 @@ import Layout from '../layouts/Layout.astro';
   <div id="socratica-root">
 
     <!-- ─── LANDING VIEW ─── -->
-    <div id="landing-view">
-      <!-- Hero wrapper — fills viewport exactly -->
-      <div class="h-screen sm:h-auto flex flex-col">
+    <div id="landing-view" class="min-h-screen flex flex-col">
+      <!-- Hero wrapper — fills viewport on mobile, grows on desktop -->
+      <div class="h-screen sm:flex-1 flex flex-col">
 
       <!-- Header -->
       <header class="flex items-center justify-between px-4 sm:px-10 py-4 sm:py-6 border-b border-gray-200">
