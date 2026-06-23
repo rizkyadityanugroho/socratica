@@ -6,3 +6,8 @@ frontend/dist/
 
 # Test coverage reports
 backend/coverage/
+
+# Deployment files — tracked in deploy branch only
+/backend/Dockerfile
+/deploy/
+/docker-compose.yml
