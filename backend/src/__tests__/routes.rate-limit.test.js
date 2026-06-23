@@ -50,20 +50,6 @@ afterAll(() => {
 
 describe('Rate Limiter - POST /api/chat', () => {
   it('returns 429 after 10 requests within 60s', async () => {
-    // Mock Gemini to return consistent responses
-    globalThis.__geminiMock.chatCreate = () => {
-      return Promise.resolve({
-        history: [],
-        sendMessageStream: () => {
-          return Promise.resolve({
-            async *[Symbol.asyncIterator]() {
-              yield { text: 'What makes you think that?' };
-            },
-          });
-        },
-      });
-    };
-
     const payload = { messages: [{ role: 'user', text: 'Test message' }] };
 
     // Send 10 requests - all should succeed (200) or fail gracefully (500 if Gemini mock fails)
@@ -95,11 +81,6 @@ describe('Rate Limiter - POST /api/chat', () => {
 
 describe('Rate Limiter - POST /api/conclude', () => {
   it('returns 429 after 5 requests within 60s', async () => {
-    // Mock Gemini for conclude endpoint
-    globalThis.__geminiMock.modelGenerateContent = () => {
-      return Promise.resolve({ text: 'You discovered that clarity comes from questioning assumptions.' });
-    };
-
     const payload = {
       messages: [
         { role: 'user', text: 'I need clarity' },
@@ -157,19 +138,6 @@ describe('Rate Limiter - GET /api/health', () => {
 
 describe('Rate Limit Headers', () => {
   it('includes correct headers on first chat request', async () => {
-    globalThis.__geminiMock.chatCreate = () => {
-      return Promise.resolve({
-        history: [],
-        sendMessageStream: () => {
-          return Promise.resolve({
-            async *[Symbol.asyncIterator]() {
-              yield { text: 'What brings you here?' };
-            },
-          });
-        },
-      });
-    };
-
     const payload = { messages: [{ role: 'user', text: 'Hello' }] };
 
     const res = await request(app)
@@ -196,10 +164,6 @@ describe('Rate Limit Headers', () => {
   }, 30000);
 
   it('includes correct headers on first conclude request', async () => {
-    globalThis.__geminiMock.modelGenerateContent = () => {
-      return Promise.resolve({ text: 'Test summary' });
-    };
-
     const payload = {
       messages: [
         { role: 'user', text: 'Test' },
